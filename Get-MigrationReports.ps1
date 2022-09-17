@@ -13,7 +13,8 @@ Version: 2.0
 
 
 .SYNOPSIS
-    this script provides you with all required reports to invastigate move request from or to Exchange Online/OnPrem 
+This script generates all the needed reports to troubleshoot a move request from or to Exchange Online/OnPrem. It can handle multiple mailboxes at once.
+
 .DESCRIPTION
   This script will create: 
     1. a summary report of a move request from an exchange server that includes the following information:
@@ -23,16 +24,18 @@ Version: 2.0
 
     2. Move Request Report 
     3. Move Request Statistics Report 
-    4. Migration users and migration user statistics Reports 
+    4. CSV file including all failure details 
     5. Batch report
-    6. CSV file including all failure details.
+    6. Migration users and migration user statistics Reports
     7. Mailbox folders Statistics 
     8. Migration Configuration 
 
 .NOTES
     this script should be excuted in exchange online or Exchange OnPrem Powershell module. 
 .EXAMPLE
-    Get-MigrationReport -Mailbox Mustafa@contoso.com 
+    .\Get-MigrationReports -Mailboxes Mustafa@contoso.com 
+    
+    .\Get-MigrationReports -Mailboxes user1@contoso.com, user2@contoso.com, user3@contoso.com 
    
 Auther: Mustafa Nassar 
 
