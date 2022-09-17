@@ -1,7 +1,5 @@
 <#
 Version: 2.0 
-# By Mustafa Nassar, Use at your own risk.  No warranties are given.
-#
 #  DISCLAIMER:
 # THIS CODE IS SAMPLE CODE. THESE SAMPLES ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
 # MICROSOFT FURTHER DISCLAIMS ALL IMPLIED WARRANTIES INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR OF FITNESS FOR
@@ -37,18 +35,16 @@ This script generates all the needed reports to troubleshoot a move request from
     
     .\Get-MigrationReports -Mailboxes user1@contoso.com, user2@contoso.com, user3@contoso.com 
    
-Auther: Mustafa Nassar 
+
+# By Mustafa Nassar, Use at your own risk.  No warranties are given.
 
 #>
 
-# declare the parameters 
 [CmdletBinding()]
-param (
-    [Parameter( Mandatory = $true, HelpMessage = 'You must specify the name of a mailbox or mailboxes:')] [array] $Mailboxes
-    #[Parameter(Mandatory = $false)][XML] $MoveRequestStatistics = (Get-MoveRequestStatistics $Mailbox -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose")
+param ( [Parameter( Mandatory = $true, HelpMessage = 'You must specify the name of a mailbox or mailboxes:')] [array] $Mailboxes )
 
-)
-  $folder = 'Get-MigrationReports'
+$folder = 'Get-MigrationReports'
+$logFile = "$folder\LogFile.txt"
 
 function Export-XMLReports {
     # Export XML reports:  
@@ -141,9 +137,7 @@ function Export-Summary {
         # Create a new log file if not found.
         New-Item $logfile  -Type File -Force  -ErrorAction SilentlyContinue
     }
-    
-
-    #Create a Summary Report: 
+     
     try {
         if (-not (Test-Path -Path $file -ErrorAction Stop )) {
             # Create a new log file if not found.
@@ -172,8 +166,7 @@ function Export-Summary {
     Add-Content $file -Value ""
     $Uniquefailure =  $MoveRequestStatistics.Report.Failures | Select-Object FailureType -Unique 
     foreach ($x in $Uniquefailure) {
-        $x.FailureType >> ($file)
-    }
+        $x.FailureType >> ($file) }
     Add-Content $file -Value ""
     Add-Content $file -Value ""
     Add-Content $file -Value "Here is more details about each Failure (Note that only the last error is selected in more details):"
@@ -182,9 +175,7 @@ function Export-Summary {
     $DetailedFailure = foreach ($U in $uniquefailure) {$MoveRequestStatistics.Report.Failures | ? {$_.FailureType -like $U.FailureType} |select Timestamp, FailureType, FailureSide, message -ExpandProperty Message -Last 1 }
     foreach ($f in $DetailedFailure) {
         $f >> ($file); 
-        Add-Content $file -Value ""
-    }
-    
+        Add-Content $file -Value "" }
     Add-Content -Path $logFile -Value "[INFO] the summary report has been created successfully."    
     Add-Content -Path $logFile -Value " [INFO] the summary report has been created successfully." 
 }
@@ -195,9 +186,7 @@ New-Item $logFile -Type File -Force -ErrorAction SilentlyContinue  | Out-Null
 
 foreach ($Mailbox in $Mailboxes) {
 
-# Define the error prefrence for the script 
 $ErrorActionPreference = 'SilentlyContinue'
-# Declare the general used variables
 $MoveRequest = Get-MoveRequest $Mailbox -ErrorAction SilentlyContinue 
 $MoveRequestStatistics = Get-MoveRequestStatistics $Mailbox -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
 $Batch = $MoveRequestStatistics.BatchName  
@@ -210,8 +199,7 @@ $MailboxStatistics = Get-MailboxStatistics $Mailbox -IncludeMoveReport -IncludeM
 $MoveHistory = Get-MailboxStatistics $Mailbox -IncludeMoveReport -IncludeMoveHistory -ErrorAction SilentlyContinue
 $Uniquefailure =  $MoveRequestStatistics.Report.Failures | select FailureType -Unique 
 $DetailedFailure = foreach ($U in $uniquefailure) {$MoveRequestStatistics.Report.Failures | ? {$_.FailureType -like $U.FailureType} |select Timestamp, FailureType, FailureSide, Message -Last 1 |ft -Wrap }
-$File = "$folder\Text-Summary_$Mailbox.txt"
-$logFile = "$folder\LogFile_$Mailbox.txt" 
+$File = "$folder\Text-Summary_$Mailbox.txt" 
 New-Item $file   -Type File -Force -ErrorAction SilentlyContinue | Out-Null
 
     try 
