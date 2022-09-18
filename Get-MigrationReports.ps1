@@ -31,9 +31,9 @@ This script generates all the needed reports to troubleshoot a move request from
 .NOTES
     this script should be excuted in exchange online or Exchange OnPrem Powershell module. 
 .EXAMPLE
-    .\Get-MigrationReports -Mailboxes Mustafa@contoso.com 
+    .\Get-MigrationReports -Identity Mustafa@contoso.com 
     
-    .\Get-MigrationReports -Mailboxes user1@contoso.com, user2@contoso.com, user3@contoso.com 
+    .\Get-MigrationReports -Identity user1@contoso.com, user2@contoso.com, user3@contoso.com 
    
 
 # By Mustafa Nassar, Use at your own risk.  No warranties are given.
@@ -41,7 +41,7 @@ This script generates all the needed reports to troubleshoot a move request from
 #>
 
 [CmdletBinding()]
-param ( [Parameter( Mandatory = $true, HelpMessage = 'You must specify the name of a mailbox or mailboxes:')] [array] $Mailboxes )
+param ( [Parameter( Mandatory = $true, HelpMessage = 'You must specify the name of a mailbox or mailboxes:')] [array] $Identity )
 
 $folder = 'Get-MigrationReports'
 $logFile = "$folder\LogFile.txt"
@@ -184,7 +184,7 @@ function Export-Summary {
 New-Item $folder -ItemType Directory -Force | Out-Null 
 New-Item $logFile -Type File -Force -ErrorAction SilentlyContinue  | Out-Null
 
-foreach ($Mailbox in $Mailboxes) {
+foreach ($Mailbox in $Identity) {
 
 $ErrorActionPreference = 'SilentlyContinue'
 $MoveRequest = Get-MoveRequest $Mailbox -ErrorAction SilentlyContinue 
