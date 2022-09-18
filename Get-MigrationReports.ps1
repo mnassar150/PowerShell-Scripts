@@ -153,38 +153,22 @@ function Export-Summary {
     [int]       $Percent = $MoveRequestStatistics.PercentComplete
     [string]    $Status  = $MoveRequestStatistics.Status
     [string]    $Message = $MoveRequestStatistics.Message 
-    $value = "This Move Request has the following infomration:"
-    $value >> ($File)
-    $value = "-----------------------------------------------------------------------"
-    $value >> ($File)
-    $value = "the status of this Move Request is " + $MoveRequestStatistics.Status.tostring() + " with " + $MoveRequestStatistics.Status + " Percent"   
-    $value >> ($File)
-    $value = ""
-    $value >> ($File)
-    $value = $MoveRequestStatistics.Message.ToString() 
-    $value >> ($File)
-    $value = ""
-    $value >> ($File)
-    $value = "-----------------------------------------------------------------------"
-    $value >> ($File)
-    $value = ""
-    $value >> ($File)
-    $value = "The Move Request has the following Failures:"
-    $value >> ($File)
-    $value = $MoveRequestStatistics.Report.Failures | Group-Object  FailureType | ft Count, Name
-    $value >> ($File)
-    $value = "-----------------------------------------------------------------------"
-    $value >> ($File)
-    $value = ""
-    $value >> ($File)
-    $value = "Here is more details about each Failure (Note that only the last error is selected in more details):"
-    $value >> ($File)
-    $value = ""
-    $value >> ($File)
-    $value = $detailedFailure
-    $value >> ($File)
-    
-    
+    $value = "This Move Request has the following infomration:" >> ($File)
+    $value = "-----------------------------------------------------------------------" >> ($File)
+    $value = "the status of this Move Request is " + $MoveRequestStatistics.Status.tostring() + " with " + $MoveRequestStatistics.Status + " Percent"  >> ($File)
+    $value = "" >> ($File)
+    $value = $MoveRequestStatistics.Message.ToString() >> ($File)
+    $value = "" >> ($File)
+    $value = "-----------------------------------------------------------------------" >> ($File)
+    $value = "" >> ($File)
+    $value = "The Move Request has the following Failures:" >> ($File)
+    $value = $MoveRequestStatistics.Report.Failures | Group-Object  FailureType | ft Count, Name >> ($File)
+    $value = "-----------------------------------------------------------------------" >> ($File)
+    $value = "" >> ($File)
+    $value = "Here is more details about each Failure (Note that only the last error is selected in more details):" >> ($File)
+    $value = "" >> ($File)
+    $detailedFailure >> ($File)
+   
     <#
     Add-Content $file -Value "This Move Request has the following infomration:"
     Add-Content $file -Value "-----------------------------------------------------------------------"
