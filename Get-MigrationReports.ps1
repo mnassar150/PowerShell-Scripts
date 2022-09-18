@@ -97,6 +97,13 @@ function Export-XMLReports {
         else {
             Add-Content -Path $logFile -Value " [Error] The Migration EndPoint not exist."
         } 
+         
+        Get-MigrationConfig | Export-Clixml "$folder\MigrationConfig.xml" 
+        Add-Content -Path $logFile -Value " [INFO] The Migration Config Report has been generated successfully."
+
+        $MailboxStatistics | Export-Clixml "$folder\MailboxStatistics_$Mailbox.xml"
+        $MoveHistory.MoveHistory[0] | Export-Clixml "$folder\MoveReport-History.xml"
+        Add-Content -Path $logFile -Value " [INFO] The Move Request History Report has been generated successfully."
         
         #$MoveRequest | Export-Clixml "MoveRequest_$Mailbox.xml"
         #Add-Content -Path $logFile -Value " [INFO] The Move Request Report has been generated successfully."
@@ -114,13 +121,6 @@ function Export-XMLReports {
 
         #$MigrationEndPoint | Export-Clixml "MigrationEndpoint_$MigrationEndpoint.xml"
         #Add-Content -Path $logFile -Value " [INFO] The Migration EndPoint Report has been generated successfully."
-
-        Get-MigrationConfig | Export-Clixml "$folder\MigrationConfig.xml" 
-        Add-Content -Path $logFile -Value " [INFO] The Migration Config Report has been generated successfully."
-
-        $MailboxStatistics | Export-Clixml "$folder\MailboxStatistics_$Mailbox.xml"
-        $MoveHistory.MoveHistory[0] | Export-Clixml "$folder\MoveReport-History.xml"
-        Add-Content -Path $logFile -Value " [INFO] The Move Request History Report has been generated successfully."
 
     }
     catch {
@@ -153,6 +153,39 @@ function Export-Summary {
     [int]       $Percent = $MoveRequestStatistics.PercentComplete
     [string]    $Status  = $MoveRequestStatistics.Status
     [string]    $Message = $MoveRequestStatistics.Message 
+    $value = "This Move Request has the following infomration:"
+    $value >> ($File)
+    $value = "-----------------------------------------------------------------------"
+    $value >> ($File)
+    $value = "the status of this Move Request is " + $MoveRequestStatistics.Status.tostring() + " with " + $MoveRequestStatistics.Status + " Percent"   
+    $value >> ($File)
+    $value = ""
+    $value >> ($File)
+    $value = $MoveRequestStatistics.Message.ToString() 
+    $value >> ($File)
+    $value = ""
+    $value >> ($File)
+    $value = "-----------------------------------------------------------------------"
+    $value >> ($File)
+    $value = ""
+    $value >> ($File)
+    $value = "The Move Request has the following Failures:"
+    $value >> ($File)
+    $value = $MoveRequestStatistics.Report.Failures | Group-Object  FailureType | ft Count, Name
+    $value >> ($File)
+    $value = "-----------------------------------------------------------------------"
+    $value >> ($File)
+    $value = ""
+    $value >> ($File)
+    $value = "Here is more details about each Failure (Note that only the last error is selected in more details):"
+    $value >> ($File)
+    $value = ""
+    $value >> ($File)
+    $value = $detailedFailure
+    $value >> ($File)
+    
+    
+    <#
     Add-Content $file -Value "This Move Request has the following infomration:"
     Add-Content $file -Value "-----------------------------------------------------------------------"
     Add-Content $file -Value "the status of this Move Request is $Status with $Percent  Percent"
@@ -177,7 +210,7 @@ function Export-Summary {
         $f >> ($file); 
         Add-Content $file -Value "" }
     Add-Content -Path $logFile -Value "[INFO] the summary report has been created successfully."    
-    Add-Content -Path $logFile -Value " [INFO] the summary report has been created successfully." 
+    Add-Content -Path $logFile -Value " [INFO] the summary report has been created successfully." #>
 }
 
 #===================MAIN======================
