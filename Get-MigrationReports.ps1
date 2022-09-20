@@ -104,25 +104,7 @@ function Export-XMLReports {
         $MailboxStatistics | Export-Clixml "$folder\MailboxStatistics_$Mailbox.xml"
         $MoveHistory.MoveHistory[0] | Export-Clixml "$folder\MoveReport-History.xml"
         Add-Content -Path $logFile -Value " [INFO] The Move Request History Report has been generated successfully."
-        
-        #$MoveRequest | Export-Clixml "MoveRequest_$Mailbox.xml"
-        #Add-Content -Path $logFile -Value " [INFO] The Move Request Report has been generated successfully."
-        #$MoveRequestStatistics | Export-Clixml "MoveRequestStatistics_$Mailbox.xml"
-        #Add-Content -Path $logFile -Value " [INFO] The Move Request Statistics Report has been generated successfully."
-    
-        #$UserMigration | Export-Clixml "MigrationUser_$Mailbox.xml" 
-        #Add-Content -Path $logFile -Value " [INFO] The User Migration Report has been generated successfully."
-    
-        #$UserMigrationStatistics | Export-Clixml "MigrationUserStatistics_$Mailbox.xml"
-        #Add-Content -Path $logFile -Value " [INFO] The Migration User Statistics Report has been generated successfully."
-    
-        #$MigrationBatch | Export-Clixml "MigrationBatch_$Batch.xml"
-        #Add-Content -Path $logFile -Value " [INFO] The Migration Batch Report has been generated successfully."
-
-        #$MigrationEndPoint | Export-Clixml "MigrationEndpoint_$MigrationEndpoint.xml"
-        #Add-Content -Path $logFile -Value " [INFO] The Migration EndPoint Report has been generated successfully."
-
-    }
+     }
     catch {
         Add-Content -Path $logFile -Value '[ERROR] Unable to export the Reports.'
         Add-Content -Path $logFile -Value $_
@@ -149,8 +131,31 @@ function Export-Summary {
         Add-Content -Path $logFile -Value $_
         throw
     }
+        $File = "Text-Summary.txt"
+        $uniquefailure =  $MoveRequestStatistics.Report.Failures | select FailureType -Unique
+        $detailedFailure = foreach ($U in $uniquefailure) {$MoveRequestStatistics.Report.Failures | ? {$_.FailureType -like $U.FailureType} |select Timestamp, FailureType, FailureSide, Message -Last 1 |fl }
+        New-Item $File -Type file -Force 
+        "This Move Request has the following infomration:" >> ($File)
+        "-----------------------------------------------------------------------" >> ($File)
+        "the status of this Move Request is " + $MoveRequestStatistics.Status.tostring() + " with " + $MoveRequestStatistics.Status + " Percent"  >> ($File)
+        "" >> ($File)
+        $MoveRequestStatistics.Message.ToString() >> ($File)
+        "" >> ($File)
+        "-----------------------------------------------------------------------" >> ($File)
+        "" >> ($File)
+        "The Move Request has the following Failures:" >> ($File)
+        $MoveRequestStatistics.Report.Failures | Group-Object  FailureType | ft Count, Name >> ($File)
+        "-----------------------------------------------------------------------" >> ($File)
+        "" >> ($File)
+        "Here is more details about each Failure (Note that only the last error is selected in more details):" >> ($File)
+        "" >> ($File)
+        $detailedFailure >> ($File)
+        
+         Add-Content -Path $logFile -Value "[INFO] the summary report has been created successfully."    
 
-    [int]       $Percent = $MoveRequestStatistics.PercentComplete
+
+
+<#  [int]       $Percent = $MoveRequestStatistics.PercentComplete
     [string]    $Status  = $MoveRequestStatistics.Status
     [string]    $Message = $MoveRequestStatistics.Message 
     $value = "This Move Request has the following infomration:" >> ($File)
@@ -167,34 +172,8 @@ function Export-Summary {
     $value = "" >> ($File)
     $value = "Here is more details about each Failure (Note that only the last error is selected in more details):" >> ($File)
     $value = "" >> ($File)
-    $detailedFailure >> ($File)
-   
-    <#
-    Add-Content $file -Value "This Move Request has the following infomration:"
-    Add-Content $file -Value "-----------------------------------------------------------------------"
-    Add-Content $file -Value "the status of this Move Request is $Status with $Percent  Percent"
-    Add-Content $file -Value ""
-    Add-Content $file -Value "$Message "
-    Add-Content $file -Value ""
-    Add-Content $file -Value "-----------------------------------------------------------------------"
-    Add-Content $file -Value ""
-    Add-Content $file -Value "The Move Request has the following Failures:"
-    Add-Content $file -Value "-----------------------------------------------------------------------"
-    Add-Content $file -Value ""
-    $Uniquefailure =  $MoveRequestStatistics.Report.Failures | Select-Object FailureType -Unique 
-    foreach ($x in $Uniquefailure) {
-        $x.FailureType >> ($file) }
-    Add-Content $file -Value ""
-    Add-Content $file -Value ""
-    Add-Content $file -Value "Here is more details about each Failure (Note that only the last error is selected in more details):"
-    Add-Content $file -Value "-----------------------------------------------------------------------"
-    Add-Content $file -Value ""
-    $DetailedFailure = foreach ($U in $uniquefailure) {$MoveRequestStatistics.Report.Failures | ? {$_.FailureType -like $U.FailureType} |select Timestamp, FailureType, FailureSide, message -ExpandProperty Message -Last 1 }
-    foreach ($f in $DetailedFailure) {
-        $f >> ($file); 
-        Add-Content $file -Value "" }
-    Add-Content -Path $logFile -Value "[INFO] the summary report has been created successfully."    
-    Add-Content -Path $logFile -Value " [INFO] the summary report has been created successfully." #>
+    $detailedFailure >> ($File) 
+    #>
 }
 
 #===================MAIN======================
