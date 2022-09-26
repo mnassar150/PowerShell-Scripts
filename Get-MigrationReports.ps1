@@ -185,6 +185,10 @@ foreach ($Mailbox in $Identity) {
 $ErrorActionPreference = 'SilentlyContinue'
 $MoveRequest = Get-MoveRequest $Mailbox -ErrorAction SilentlyContinue 
 $MoveRequestStatistics = Get-MoveRequestStatistics $Mailbox -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
+   if ($null -eq $MoveRequest) {
+        Write-Host -ForegroundColor Red -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!" 
+        Add-Content -Path $logFile -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!"
+    }
 $Batch = $MoveRequestStatistics.BatchName  
 $MigrationBatch = Get-MigrationBatch $Batch -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
 $UserMigration = Get-MigrationUser $Mailbox  -ErrorAction SilentlyContinue
