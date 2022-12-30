@@ -1,5 +1,8 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 <#
-Version: 2.0 
+Version: 2.0
 #  DISCLAIMER:
 # THIS CODE IS SAMPLE CODE. THESE SAMPLES ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
 # MICROSOFT FURTHER DISCLAIMS ALL IMPLIED WARRANTIES INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR OF FITNESS FOR
@@ -14,219 +17,165 @@ Version: 2.0
 This script generates all the needed reports to troubleshoot a move request from or to Exchange Online/OnPrem. It can handle multiple mailboxes at once.
 
 .DESCRIPTION
-  This script will create: 
-    1. a summary report of a move request from an exchange server that includes the following information:
-        a.	The move request's status and percentage.
-        b.	The failure types for the move request. 
-        c.	The detailed message for each failure. 
+This is a PowerShell script that is used for generating reports related to mailbox migrations in Microsoft Exchange. The script accepts a mandatory parameter called $Identity, which should be an array of mailbox names. The script exports various types of reports as XML files, including:
+- MoveRequest: A report containing information about the move request for the specified mailbox.
+- MoveRequestStatistics: A report containing statistical information about the move request, including details about the number of items that were moved, failed, or are in a warning state.
+- UserMigration
+- UserMigrationStatistics
+- MigrationBatch
+- MigrationEndPoint
+- MigrationConfig
+The script also exports a report containing statistics for the specified mailbox, as well as a report containing the move history for the specified mailbox. Finally, the script logs any errors that occur during the export process to a log file called LogFile.txt.
 
-    2. Move Request Report 
-    3. Move Request Statistics Report 
-    4. CSV file including all failure details 
-    5. Batch report
-    6. Migration users and migration user statistics Reports
-    7. Mailbox folders Statistics 
-    8. Migration Configuration 
 
 .NOTES
-    this script should be excuted in exchange online or Exchange OnPrem Powershell module. 
+    This script should be excuted in exchange online or Exchange OnPrem Powershell module.
 .EXAMPLE
-    .\Get-MigrationReports -Identity Mustafa@contoso.com 
-    
-    .\Get-MigrationReports -Identity user1@contoso.com, user2@contoso.com, user3@contoso.com 
-   
+    .\Get-MigrationReports -Identity Mustafa@contoso.com
+    .\Get-MigrationReports -Identity user1@contoso.com, user2@contoso.com, user3@contoso.com
 
 # By Mustafa Nassar, Use at your own risk.  No warranties are given.
 
 #>
 
 [CmdletBinding()]
-param ( [Parameter( Mandatory = $true, HelpMessage = 'You must specify the name of a mailbox or mailboxes:')] [array] $Identity )
+param (
+    [Parameter( Mandatory = $true, HelpMessage = 'You must specify the name of a mailbox or mailboxes:')] [string[]] $Identity,
+    [string] $OutputFolder = "Get-MigrationReports"
+)
 
-$folder = 'Get-MigrationReports'
-$logFile = "$folder\LogFile.txt"
+# Set the log file path
+$logFile = "$OutputFolder\LogFile.txt"
 
 function Export-XMLReports {
-    # Export XML reports:  
-    Try {
-        if (-not $null -eq $MoveRequest) {
-            $MoveRequest | Export-Clixml "$folder\MoveRequest_$Mailbox.xml"
+    # Export XML reports:
+    try {
+        if ($null -ne $MoveRequest) {
+            $MoveRequest | Export-Clixml "$OutputFolder\MoveRequest_$Mailbox.xml"
             Add-Content -Path $logFile -Value " [INFO] The Move Request Report has been generated successfully."
-        }
-        else {
+        } else {
             Add-Content -Path $logFile -Value " [Error] The Move Request not exist."
         }
-        
-        if (-not $null -eq $MoveRequestStatistics) {
-            $MoveRequestStatistics | Export-Clixml "$folder\MoveRequestStatistics_$Mailbox.xml"
+        if ($null -ne $MoveRequestStatistics) {
+            $MoveRequestStatistics | Export-Clixml "$OutputFolder\MoveRequestStatistics_$Mailbox.xml"
             Add-Content -Path $logFile -Value " [INFO] The Move Request Statistics Report has been generated successfully."
-        }
-        else {
+        } else {
             Add-Content -Path $logFile -Value " [Error] The Move Request Statistics not exist."
         }
-        
-        if (-not $null -eq $UserMigration) {
-            $UserMigration | Export-Clixml "$folder\MigrationUser_$Mailbox.xml" 
+        if ($null -ne $UserMigration) {
+            $UserMigration | Export-Clixml "$OutputFolder\MigrationUser_$Mailbox.xml"
             Add-Content -Path $logFile -Value " [INFO] The User Migration Report has been generated successfully."
-        }
-        else {
+        } else {
             Add-Content -Path $logFile -Value " [Error] The Migration User not exist."
         }
 
-        if (-not $null -eq $UserMigrationStatistics) {
-            $UserMigrationStatistics | Export-Clixml "$folder\MigrationUserStatistics_$Mailbox.xml"
+        if ($null -ne $UserMigrationStatistics) {
+            $UserMigrationStatistics | Export-Clixml "$OutputFolder\MigrationUserStatistics_$Mailbox.xml"
             Add-Content -Path $logFile -Value " [INFO] The Migration User Statistics Report has been generated successfully."
-    
-        }
-        else {
+        } else {
             Add-Content -Path $logFile -Value " [Error] The Migration User Stistics Report not exist."
         }
 
-        if (-not $null -eq $MigrationBatch) {
-            $MigrationBatch | Export-Clixml "$folder\MigrationBatch_$Mailbox.xml"
+        if ($null -ne $MigrationBatch) {
+            $MigrationBatch | Export-Clixml "$OutputFolder\MigrationBatch_$Mailbox.xml"
             Add-Content -Path $logFile -Value " [INFO] The Migration Batch Report has been generated successfully."
-        }
-        else {
+        } else {
             Add-Content -Path $logFile -Value " [Error] The Migration Batch not exist."
-        } 
-        
-        if (-not $null -eq $MigrationEndPoint) {
-            $MigrationEndPoint | Export-Clixml "$folder\MigrationEndpoint_$MigrationEndpoint.xml"
-            Add-Content -Path $logFile -Value " [INFO] The Migration EndPoint Report has been generated successfully."
         }
-        else {
+        if ($null -ne $MigrationEndPoint) {
+            $MigrationEndPoint | Export-Clixml "$OutputFolder\MigrationEndpoint_$MigrationEndpoint.xml"
+            Add-Content -Path $logFile -Value " [INFO] The Migration EndPoint Report has been generated successfully."
+        } else {
             Add-Content -Path $logFile -Value " [Error] The Migration EndPoint not exist."
-        } 
-         
-        Get-MigrationConfig | Export-Clixml "$folder\MigrationConfig.xml" 
+        }
+        Get-MigrationConfig | Export-Clixml "$OutputFolder\MigrationConfig.xml"
         Add-Content -Path $logFile -Value " [INFO] The Migration Config Report has been generated successfully."
 
-        $MailboxStatistics | Export-Clixml "$folder\MailboxStatistics_$Mailbox.xml"
-        $MoveHistory.MoveHistory[0] | Export-Clixml "$folder\MoveReport-History.xml"
+        $MailboxStatistics | Export-Clixml "$OutputFolder\MailboxStatistics_$Mailbox.xml"
+        $MoveHistory.MoveHistory[0] | Export-Clixml "$OutputFolder\MoveReport-History.xml"
         Add-Content -Path $logFile -Value " [INFO] The Move Request History Report has been generated successfully."
-     }
-    catch {
+    } catch {
         Add-Content -Path $logFile -Value '[ERROR] Unable to export the Reports.'
         Add-Content -Path $logFile -Value $_
         throw
     }
-
 }
+
 function Export-Summary {
-    #check the log file 
-    if (-not (Test-Path -Path $logfile -ErrorAction Stop )) 
-    {
+    #check the log file
+    if (-not (Test-Path -Path $logfile -ErrorAction Stop )) {
         # Create a new log file if not found.
         New-Item $logfile  -Type File -Force  -ErrorAction SilentlyContinue
     }
-     
+
     try {
         if (-not (Test-Path -Path $file -ErrorAction Stop )) {
             # Create a new log file if not found.
             New-Item $file   -Type File -Force -ErrorAction SilentlyContinue
         }
-    }
-    catch {
+    } catch {
         Add-Content -Path $logfile -Value '[ERROR] Unable to Create Summary File.'
         Add-Content -Path $logFile -Value $_
         throw
     }
-        $File = "Text-Summary.txt"
-        $uniquefailure =  $MoveRequestStatistics.Report.Failures | select FailureType -Unique
-        $detailedFailure = foreach ($U in $uniquefailure) {$MoveRequestStatistics.Report.Failures | ? {$_.FailureType -like $U.FailureType} |select Timestamp, FailureType, FailureSide, Message -Last 1 |fl }
-        New-Item $File -Type file -Force 
-        "This Move Request has the following infomration:" >> ($File)
-        "-----------------------------------------------------------------------" >> ($File)
-        "the status of this Move Request is " + $MoveRequestStatistics.Status.tostring() + " with " + $MoveRequestStatistics.Status + " Percent"  >> ($File)
-        "" >> ($File)
-        $MoveRequestStatistics.Message.ToString() >> ($File)
-        "" >> ($File)
-        "-----------------------------------------------------------------------" >> ($File)
-        "" >> ($File)
-        "The Move Request has the following Failures:" >> ($File)
-        $MoveRequestStatistics.Report.Failures | Group-Object  FailureType | ft Count, Name >> ($File)
-        "-----------------------------------------------------------------------" >> ($File)
-        "" >> ($File)
-        "Here is more details about each Failure (Note that only the last error is selected in more details):" >> ($File)
-        "" >> ($File)
-        $detailedFailure >> ($File)
-        
-         Add-Content -Path $logFile -Value "[INFO] the summary report has been created successfully."    
-
-
-
-<#  [int]       $Percent = $MoveRequestStatistics.PercentComplete
-    [string]    $Status  = $MoveRequestStatistics.Status
-    [string]    $Message = $MoveRequestStatistics.Message 
-    $value = "This Move Request has the following infomration:" >> ($File)
-    $value = "-----------------------------------------------------------------------" >> ($File)
-    $value = "the status of this Move Request is " + $MoveRequestStatistics.Status.tostring() + " with " + $MoveRequestStatistics.Status + " Percent"  >> ($File)
-    $value = "" >> ($File)
-    $value = $MoveRequestStatistics.Message.ToString() >> ($File)
-    $value = "" >> ($File)
-    $value = "-----------------------------------------------------------------------" >> ($File)
-    $value = "" >> ($File)
-    $value = "The Move Request has the following Failures:" >> ($File)
-    $value = $MoveRequestStatistics.Report.Failures | Group-Object  FailureType | ft Count, Name >> ($File)
-    $value = "-----------------------------------------------------------------------" >> ($File)
-    $value = "" >> ($File)
-    $value = "Here is more details about each Failure (Note that only the last error is selected in more details):" >> ($File)
-    $value = "" >> ($File)
-    $detailedFailure >> ($File) 
-    #>
+    $File = "Text-Summary.txt"
+    $uniquefailure = $MoveRequestStatistics.Report.Failures | Select-Object FailureType -Unique
+    $detailedFailure = foreach ($U in $uniquefailure) { $MoveRequestStatistics.Report.Failures | Where-Object { $_.FailureType -like $U.FailureType } | Select-Object Timestamp, FailureType, FailureSide, Message -Last 1 | Format-List }
+    New-Item $File -Type file -Force
+    "This Move Request has the following infomration:" >> ($File)
+    "-----------------------------------------------------------------------" >> ($File)
+    "the status of this Move Request is " + $MoveRequestStatistics.Status.tostring() + " with " + $MoveRequestStatistics.Status + " Percent"  >> ($File)
+    "" >> ($File)
+    $MoveRequestStatistics.Message.ToString() >> ($File)
+    "" >> ($File)
+    "-----------------------------------------------------------------------" >> ($File)
+    "" >> ($File)
+    "The Move Request has the following Failures:" >> ($File)
+    $MoveRequestStatistics.Report.Failures | Group-Object  FailureType | Format-Table Count, Name >> ($File)
+    "-----------------------------------------------------------------------" >> ($File)
+    "" >> ($File)
+    "Here is more details about each Failure (Note that only the last error is selected in more details):" >> ($File)
+    "" >> ($File)
+    $detailedFailure >> ($File)
+    Add-Content -Path $logFile -Value "[INFO] the summary report has been created successfully."
 }
 
 #===================MAIN======================
-New-Item $folder -ItemType Directory -Force | Out-Null 
-New-Item $logFile -Type File -Force -ErrorAction SilentlyContinue  | Out-Null
+New-Item $OutputFolder -ItemType Directory -Force | Out-Null
+New-Item $logFile -Type File -Force -ErrorAction SilentlyContinue | Out-Null
 
 foreach ($Mailbox in $Identity) {
 
-$ErrorActionPreference = 'SilentlyContinue'
-$MoveRequest = Get-MoveRequest $Mailbox -ErrorAction SilentlyContinue 
-$MoveRequestStatistics = Get-MoveRequestStatistics $Mailbox -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
-   if ($null -eq $MoveRequest) {
-        Write-Host -ForegroundColor Red -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!" 
+    $ErrorActionPreference = 'SilentlyContinue'
+    $MoveRequest = Get-MoveRequest $Mailbox -ErrorAction SilentlyContinue
+    $MoveRequestStatistics = Get-MoveRequestStatistics $Mailbox -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
+    if ($null -eq $MoveRequest) {
+        Write-Host -ForegroundColor Red -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!"
         Add-Content -Path $logFile -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!"
     }
-$Batch = $MoveRequestStatistics.BatchName  
-$MigrationBatch = Get-MigrationBatch $Batch -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
-$UserMigration = Get-MigrationUser $Mailbox  -ErrorAction SilentlyContinue
-$UserMigrationStatistics = Get-MigrationUserStatistics $Mailbox -IncludeSkippedItems -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue 
-$Endpoint = $MigrationBatch.SourceEndpoint 
-$MigrationEndPoint = Get-MigrationEndpoint -Identity $Endpoint -DiagnosticInfo Verbose -ErrorAction SilentlyContinue
-$MailboxStatistics = Get-MailboxStatistics $Mailbox -IncludeMoveReport -IncludeMoveHistory -ErrorAction SilentlyContinue
-$MoveHistory = Get-MailboxStatistics $Mailbox -IncludeMoveReport -IncludeMoveHistory -ErrorAction SilentlyContinue
-$Uniquefailure =  $MoveRequestStatistics.Report.Failures | select FailureType -Unique 
-$DetailedFailure = foreach ($U in $uniquefailure) {$MoveRequestStatistics.Report.Failures | ? {$_.FailureType -like $U.FailureType} |select Timestamp, FailureType, FailureSide, Message -Last 1 |ft -Wrap }
-$File = "$folder\Text-Summary_$Mailbox.txt" 
-New-Item $file   -Type File -Force -ErrorAction SilentlyContinue | Out-Null
+    $Batch = $MoveRequestStatistics.BatchName
+    $MigrationBatch = Get-MigrationBatch $Batch -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
+    $UserMigration = Get-MigrationUser $Mailbox  -ErrorAction SilentlyContinue
+    $UserMigrationStatistics = Get-MigrationUserStatistics $Mailbox -IncludeSkippedItems -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
+    $Endpoint = $MigrationBatch.SourceEndpoint
+    $MigrationEndPoint = Get-MigrationEndpoint -Identity $Endpoint -DiagnosticInfo Verbose -ErrorAction SilentlyContinue
+    $MailboxStatistics = Get-MailboxStatistics $Mailbox -IncludeMoveReport -IncludeMoveHistory -ErrorAction SilentlyContinue
+    $MoveHistory = Get-MailboxStatistics $Mailbox -IncludeMoveReport -IncludeMoveHistory -ErrorAction SilentlyContinue
+    $Uniquefailure = $MoveRequestStatistics.Report.Failures | Select-Object FailureType -Unique
+    $DetailedFailure = foreach ($U in $uniquefailure) { $MoveRequestStatistics.Report.Failures | Where-Object { $_.FailureType -like $U.FailureType } | Select-Object Timestamp, FailureType, FailureSide, Message -Last 1 | Format-Table -Wrap }
+    $File = "$OutputFolder\Text-Summary_$Mailbox.txt"
+    New-Item $file   -Type File -Force -ErrorAction SilentlyContinue | Out-Null
 
-    try 
-    {
-        if (-not $null -eq $MoveRequestStatistics ) 
-        {
-        Export-XMLReports
-        Export-Summary 
-        Write-Host -ForegroundColor "Green" "The MoveRequest reports for $Mailbox exported successfully!"
-        }   
-    }
-    catch {
+    try {
+        if ($null -ne $MoveRequestStatistics ) {
+            Export-XMLReports
+            Export-Summary
+            Write-Host -ForegroundColor "Green" "The MoveRequest reports for $Mailbox exported successfully!"
+        }
+    } catch {
         Add-Content -Path $logFile -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!"
         Add-Content -Path $logFile -Value $_
         Write-Host -ForegroundColor "Red" "The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!"
-            
         throw
     }
-
-
 }
-
-$compress = @{
-    Path = $folder
-    CompressionLevel = "Fastest"
-    DestinationPath = "Migration-Reports.Zip"
-}
-Compress-Archive @compress
-
-
