@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 <#
-Version: 2.0
+Version: 2.3
 #  DISCLAIMER:
 # THIS CODE IS SAMPLE CODE. THESE SAMPLES ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
 # MICROSOFT FURTHER DISCLAIMS ALL IMPLIED WARRANTIES INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR OF FITNESS FOR
@@ -12,7 +12,8 @@ Version: 2.0
 # SAMPLES, EVEN IF MICROSOFT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. BECAUSE SOME STATES DO NOT ALLOW THE EXCLUSION OR LIMITATION
 # OF LIABILITY FOR CONSEQUENTIAL OR INCIDENTAL DAMAGES, THE ABOVE LIMITATION MAY NOT APPLY TO YOU.
 
-
+<#
+Version: 2.0
 .SYNOPSIS
 This script generates all the needed reports to troubleshoot a move request from or to Exchange Online/OnPrem. It can handle multiple mailboxes at once.
 
@@ -92,7 +93,7 @@ function Export-XMLReports {
         Add-Content -Path $logFile -Value " [INFO] The Migration Config Report has been generated successfully."
 
         $MailboxStatistics | Export-Clixml "$OutputFolder\MailboxStatistics_$Mailbox.xml"
-        $MoveHistory.MoveHistory[0] | Export-Clixml "$OutputFolder\MoveReport-History.xml"
+        $MailboxStatistics.MoveHistory[0] | Export-Clixml "$OutputFolder\MoveReport-History.xml"
         Add-Content -Path $logFile -Value " [INFO] The Move Request History Report has been generated successfully."
     } catch {
         Add-Content -Path $logFile -Value '[ERROR] Unable to export the Reports.'
@@ -145,10 +146,8 @@ New-Item $OutputFolder -ItemType Directory -Force | Out-Null
 New-Item $logFile -Type File -Force -ErrorAction SilentlyContinue | Out-Null
 
 foreach ($Mailbox in $Identity) {
-
-    $ErrorActionPreference = 'SilentlyContinue'
     $MoveRequest = Get-MoveRequest $Mailbox -ErrorAction SilentlyContinue
-    $MoveRequestStatistics = Get-MoveRequestStatistics $Mailbox -IncludeReport -DiagnosticInfo "showtimeslots, showtimeline, verbose" -ErrorAction SilentlyContinue
+    $MoveRequestStatistics = Get-MoveRequestStatistics $Mailbox -IncludeReport -ErrorAction SilentlyContinue
     if ($null -eq $MoveRequest) {
         Write-Host -ForegroundColor Red -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!"
         Add-Content -Path $logFile -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!"
@@ -160,18 +159,15 @@ foreach ($Mailbox in $Identity) {
     $Endpoint = $MigrationBatch.SourceEndpoint
     $MigrationEndPoint = Get-MigrationEndpoint -Identity $Endpoint -DiagnosticInfo Verbose -ErrorAction SilentlyContinue
     $MailboxStatistics = Get-MailboxStatistics $Mailbox -IncludeMoveReport -IncludeMoveHistory -ErrorAction SilentlyContinue
-    $MoveHistory = Get-MailboxStatistics $Mailbox -IncludeMoveReport -IncludeMoveHistory -ErrorAction SilentlyContinue
     $Uniquefailure = $MoveRequestStatistics.Report.Failures | Select-Object FailureType -Unique
     $DetailedFailure = foreach ($U in $uniquefailure) { $MoveRequestStatistics.Report.Failures | Where-Object { $_.FailureType -like $U.FailureType } | Select-Object Timestamp, FailureType, FailureSide, Message -Last 1 | Format-Table -Wrap }
     $File = "$OutputFolder\Text-Summary_$Mailbox.txt"
     New-Item $file   -Type File -Force -ErrorAction SilentlyContinue | Out-Null
 
     try {
-        if ($null -ne $MoveRequestStatistics ) {
-            Export-XMLReports
-            Export-Summary
-            Write-Host -ForegroundColor "Green" "The MoveRequest reports for $Mailbox exported successfully!"
-        }
+        Export-XMLReports
+        Export-Summary
+        Write-Host -ForegroundColor "Green" "The MoveRequest reports for $Mailbox exported successfully!"
     } catch {
         Add-Content -Path $logFile -Value "[ERROR] The MoveRequest for the $Mailbox cannot be found, please check spelling and try again!"
         Add-Content -Path $logFile -Value $_
